@@ -1,13 +1,9 @@
----
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
----
+# Reproducible Research: Peer Assessment 1
 
 ## Introduction
 - always use echo = TRUE so that someone else will be able to read the code
-```{r setoptions, echo = TRUE}
+
+```r
 library(knitr)
 library(lattice)
 opts_chunk$set(echo = TRUE)
@@ -16,7 +12,8 @@ opts_chunk$set(echo = TRUE)
 ## Loading and preprocessing the data
 
 **(1) Load the data (i.e. read.csv())**
-```{r}
+
+```r
 wd <- getwd()
 fileUrl <- "http://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip"
 file <- "repdata-data-activity.zip"
@@ -34,7 +31,8 @@ data <- read.csv(paste(wd, "/activity.csv", sep =""))
 ```
 
 **(2) Process/transform the data (if necessary) into a format suitable for your analysis**
-```{r}
+
+```r
 # Merge date and interval columns into one POSIXct class column called datetime
 data$datetime <- strptime(paste(data$date, sprintf("%04d", data$interval)),
                           format = "%Y-%m-%d %H%M")
@@ -45,29 +43,43 @@ data$interval <- as.factor(data$interval)
 ## What is mean total number of steps taken per day?
 
 **(1) Make a histogram of the total number of steps taken each day**
-```{r}
+
+```r
 meantotal <- tapply(data$steps, data$date, sum)
 hist(meantotal, xlim=c(0, 25000), ylim=c(0, 30),
      main = "Total number of steps taken each day", xlab = "Number of steps")
 ```
 
+![](PA1_template_files/figure-html/unnamed-chunk-3-1.png) 
+
 **(2) Calculate and report the mean and median total number of steps taken per day**
 
 - mean
-```{r}
+
+```r
 mean(meantotal, na.rm = TRUE)
 ```
 
+```
+## [1] 10766.19
+```
+
 - median
-```{r}
+
+```r
 median(meantotal, na.rm = TRUE)
+```
+
+```
+## [1] 10765
 ```
 
 ## What is the average daily activity pattern?
 
 **(1) time series plot of the 5-minute interval (x-axis) and the average number of steps taken,
 averaged across all days (y-axis)**
-```{r}
+
+```r
 d_pattern <- data.frame(interval = sprintf("%04d", as.numeric(levels(data$interval))),
                             d_mean = tapply(data$steps, data$interval, mean, na.rm = TRUE))
 plot(as.numeric(as.character(d_pattern$interval)), d_pattern$d_mean, type = "l",
@@ -75,17 +87,30 @@ plot(as.numeric(as.character(d_pattern$interval)), d_pattern$d_mean, type = "l",
      xlab = "Interval", ylab = "Average number of steps taken")
 ```
 
+![](PA1_template_files/figure-html/unnamed-chunk-6-1.png) 
+
 **(2) Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?**
-```{r}
+
+```r
 d_pattern[(d_pattern$d_mean == max(d_pattern$d_mean)),]
+```
+
+```
+##     interval   d_mean
+## 835     0835 206.1698
 ```
 As indicated above, the 5-minute interval at **8:35am** contains the maximum number of steps, which is approximately **206** steps.
 
 ## Imputing missing values
 
 **(1) Calculate and report the total number of missing values in the dataset**
-```{r}
+
+```r
 nrow(data[(data$steps == "NA"),])
+```
+
+```
+## [1] 2304
 ```
 
 **(2) Devise a strategy for filling in all of the missing values in the dataset**
@@ -93,7 +118,8 @@ nrow(data[(data$steps == "NA"),])
 The strategy for imputing missing data is to **fill in all of the missing values in the original dataset with the mean for that 5-minutes interval**.
 
 **(3) Create a new dataset (impu_data) that is equal to the original dataset but with the missing data filled in**
-```{r}
+
+```r
 impu_data <- data
 impu_data$interval <- as.factor(sprintf("%04d", as.numeric(levels(data$interval))))
 impu_data <- merge(impu_data, d_pattern, by = "interval", all=T)
@@ -102,21 +128,34 @@ impu_data <- impu_data[order(impu_data$datetime),]
 ```
 
 **(4-A) Make a histogram of the total number of steps taken each day**
-```{r}
+
+```r
 impu_meantotal <- tapply(impu_data$steps, impu_data$date, sum)
 hist(impu_meantotal, xlim=c(0, 25000), ylim=c(0, 40),
      main = "Total number of steps taken each day", xlab = "Number of steps")
 ```
 
+![](PA1_template_files/figure-html/unnamed-chunk-10-1.png) 
+
 **(4-B) Calculate and report the mean and median total number of steps taken per day**
 
 - mean
-```{r}
+
+```r
 mean(impu_meantotal, na.rm = TRUE)
 ```
+
+```
+## [1] 10766.19
+```
 - median
-```{r}
+
+```r
 median(impu_meantotal, na.rm = TRUE)
+```
+
+```
+## [1] 10766.19
 ```
 
 - The mean is not different from the estimates from the fist part of the assignment. However, median is different and the new median value is the same as mean value now.
@@ -125,13 +164,15 @@ median(impu_meantotal, na.rm = TRUE)
 ## Are there differences in activity patterns between weekdays and weekends?
 
 **(1) Create a new factor variable in the dataset with two levels - "weekday" and "weekend" indicating whether a given date is a weekday or weekend day**
-```{r}
+
+```r
 impu_data$weekdays <- as.factor(ifelse(weekdays(impu_data$datetime)
                                        %in% c("Saturday","Sunday"), "weekend", "weekday"))
 ```
 
 **(2) Make a panel plot containing a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis)**
-```{r}
+
+```r
 impu_d_mean = tapply(impu_data$steps, list(impu_data$interval, impu_data$weekdays), mean)
 impu_d_pattern <- as.data.frame.table(impu_d_mean)
 names(impu_d_pattern) <- c("interval", "weekdays", "impu_d_mean")
@@ -139,6 +180,8 @@ impu_d_pattern$interval <- as.numeric(as.character((impu_d_pattern$interval)))
 xyplot(impu_d_mean ~ interval | weekdays, data = impu_d_pattern, type = "l",
        xlab = "Interval", ylab = "Number of steps", layout = c(1, 2))
 ```
+
+![](PA1_template_files/figure-html/unnamed-chunk-14-1.png) 
 
 ### Conclusion
 
